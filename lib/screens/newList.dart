@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:compra_rapida_2/models/pedido.dart';
 import 'package:compra_rapida_2/models/user.dart';
+import 'package:compra_rapida_2/screens/order.dart';
 import 'package:flutter/material.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:share/share.dart';
@@ -10,8 +11,11 @@ class NewList extends StatefulWidget {
   _NewListState createState() => _NewListState();
 
   User user;
+  List itemList = [];
+  bool novo;
 
-  NewList(this.user);
+
+  NewList(this.user, this.itemList, this.novo);
 }
 
 class _NewListState extends State<NewList> {
@@ -21,7 +25,8 @@ class _NewListState extends State<NewList> {
 
   final itemController = TextEditingController();
   final commentController = TextEditingController();
-  List itemList = [];
+  bool altera = false;
+
 
   void _addItem() {
     setState(() {
@@ -29,7 +34,8 @@ class _NewListState extends State<NewList> {
       newItem["Item"] = itemController.text;
       newItem["comment"] = "";
       itemController.clear();
-      itemList.add(newItem);
+      widget.itemList.add(newItem);
+      altera = true;
     });
   }
 
@@ -69,10 +75,10 @@ class _NewListState extends State<NewList> {
                             onChanged: (value) {
                               setState(() {
                                 Map<String, dynamic> commentItem = Map();
-                                commentItem["Item"] = itemList[index]["Item"];
+                                commentItem["Item"] = widget.itemList[index]["Item"];
                                 commentItem["comment"] = value;
-                                itemList.removeAt(index);
-                                itemList.insert(index, commentItem);
+                                widget.itemList.removeAt(index);
+                                widget.itemList.insert(index, commentItem);
                               });
                             },
                           ),
@@ -101,24 +107,24 @@ class _NewListState extends State<NewList> {
         trailing: IconButton(
             icon: Icon(Icons.add_comment),
             onPressed: () {
-              commentController.text = itemList[index]["comment"];
+              commentController.text = widget.itemList[index]["comment"];
               _settingModalBottomSheet(context, index);
             }),
-        title: Text(itemList[index]["Item"]),
-        subtitle: Text(itemList[index]["comment"]),
+        title: Text(widget.itemList[index]["Item"]),
+        subtitle: Text(widget.itemList[index]["comment"]),
       ),
       onDismissed: (direction) {
         setState(() {
-          Map<String, dynamic> lastRemoved = Map.from(itemList[index]);
+          Map<String, dynamic> lastRemoved = Map.from(widget.itemList[index]);
           int lastRemovedPos = index;
-          itemList.removeAt(index);
+          widget.itemList.removeAt(index);
           final snack = SnackBar(
             content: Text("Item \"${lastRemoved["Item"]}\" removido"),
             action: SnackBarAction(
                 label: "Desfazer",
                 onPressed: () {
                   setState(() {
-                    itemList.insert(lastRemovedPos, lastRemoved);
+                    widget.itemList.insert(lastRemovedPos, lastRemoved);
                   });
                 }),
             duration: Duration(seconds: 3),
@@ -134,20 +140,20 @@ class _NewListState extends State<NewList> {
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-          child: Icon(
-            Icons.save,
-            size: 40,
-          ),
-          onPressed: () {
+        backgroundColor: widget.itemList.isNotEmpty ? Colors.lightBlueAccent : Colors.grey,
+
+          child: widget.novo ? Icon(Icons.save, size: 40,) : Icon(Icons.arrow_forward, size: 40,),
+          onPressed: widget.itemList.isNotEmpty ? () {
 
             Pedido ped = new Pedido();
             ped.userId = widget.user.idUser;
             ped.situacao = "avalia";
-            ped.itens = itemList;
+            ped.itens = widget.itemList;
 
-            Firestore db = Firestore.instance;
-            db.collection("usuarios").document(widget.user.idUser).collection("pedidos").document().setData(ped.toMap());
-
+            if (widget.novo) {
+              Firestore db = Firestore.instance;
+              db.collection("usuarios").document(widget.user.idUser).collection("pedidos").document().setData(ped.toMap());
+            }
             Alert(
                 context: context,
                 title: "Lista de Compras Salva!",
@@ -157,7 +163,7 @@ class _NewListState extends State<NewList> {
                   DialogButton(
                       child: Text("Sim"),
                       onPressed: () {
-
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => Order(ped),));
                       }),
                   DialogButton(
                       child: Text("Não"),
@@ -167,13 +173,13 @@ class _NewListState extends State<NewList> {
                       }),
                 ]).show();
 
-          }),
+          } : null),
       appBar: AppBar(
         actions: [
           IconButton(icon: Icon(Icons.share), onPressed: () {
             String mensagem = "*Lista de Compras*\n";
-            for ( int i = 0; i < itemList.length; i++ ){
-              mensagem += "${i+1}. ${itemList[i]["Item"]} \n";
+            for ( int i = 0; i < widget.itemList.length; i++ ){
+              mensagem += "${i+1}. ${widget.itemList[i]["Item"]} \n";
             }
             Share.share(mensagem);
           }),
@@ -230,11 +236,11 @@ class _NewListState extends State<NewList> {
                 ],
               ),
             ),
-            itemList.isNotEmpty
+            widget.itemList.isNotEmpty
                 ? Expanded(
                     child: ListView.builder(
                       padding: EdgeInsets.only(top: 10.0),
-                      itemCount: itemList.length,
+                      itemCount: widget.itemList.length,
                       itemBuilder: buildItemList,
                     ),
                   )

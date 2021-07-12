@@ -19,6 +19,7 @@ class _RegisterState extends State<Register> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
   final formkey = GlobalKey<FormState>();
+  bool loading = false;
 
   void onSuccess() {
     scaffoldKey.currentState.showSnackBar(SnackBar(
@@ -40,6 +41,9 @@ class _RegisterState extends State<Register> {
 
 
   _cadastraUsuario(User user) {
+    setState(() {
+      loading = true;
+    });
 
 
     FirebaseAuth auth = FirebaseAuth.instance;
@@ -55,6 +59,9 @@ class _RegisterState extends State<Register> {
       db.collection("usuarios")
           .document( firebaseUser.user.uid )
           .setData( user.toMap() );
+      setState(() {
+        loading = false;
+      });
     onSuccess();
 
     }).catchError((e) {
@@ -155,6 +162,7 @@ class _RegisterState extends State<Register> {
                     },
                   ),
                 ),
+                loading ? CircularProgressIndicator() :
                 Container(
                   width: 300,
                   child: Padding(

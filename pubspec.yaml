@@ -18,7 +18,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.7.0 <3.0.0"
+  sdk: ">=2.1.0 <3.0.0"
 
 dependencies:
   flutter:
@@ -39,6 +39,11 @@ dependencies:
   scoped_model: ^1.0.1
   share: ^0.6.1+1
   rflutter_alert: ^1.1.0
+  combos: ^1.2.0
+  google_maps_flutter: ^2.0.6
+  flutter_typeahead: ^2.0.0
+  geolocator: ^5.1.1+1
+  date_format: ^2.0.2
 
 dev_dependencies:
   flutter_test:
@@ -63,6 +68,8 @@ flutter:
     - images/logo.png
     - images/google.png
     - images/facebook.png
+    - images/motorista.png
+    - images/passageiro.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
