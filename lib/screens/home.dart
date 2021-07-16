@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:compra_rapida_2/models/destino.dart';
+import 'package:compra_rapida_2/models/market.dart';
 import 'package:compra_rapida_2/models/order.dart';
 import 'package:compra_rapida_2/models/pedido.dart';
+import 'package:compra_rapida_2/models/shopper.dart';
 import 'package:compra_rapida_2/models/user.dart';
 import 'package:compra_rapida_2/screens/newList.dart';
 import 'package:compra_rapida_2/util/util.dart';
@@ -23,6 +26,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   List<Pedido> pedidos = [];
   OrderPed ordersInfos = new OrderPed();
+  String idDocument;
   bool loadingOrder = false;
   bool loadingListas = false;
   bool possuiOrder = false;
@@ -86,31 +90,17 @@ class _HomeState extends State<Home> {
 
     List<DocumentSnapshot> documentList;
     documentList = (await db
-            .collection("pedidos")
-            .where("userClId.id", isEqualTo: widget.user.idUser)
-            .getDocuments())
+        .collection("pedidos")
+        .where("userClId.id", isEqualTo: widget.user.idUser)
+        .getDocuments())
         .documents;
 
     if (documentList.isNotEmpty) {
       int ultimoPed = documentList.length - 1;
-      ordersInfos.dataHoraPed = documentList[ultimoPed].data["dataHoraPed"];
-      ordersInfos.itens = documentList[ultimoPed].data["itens"];
-      ordersInfos.situacao = documentList[ultimoPed].data["situacao"];
-      ordersInfos.ruaDest = documentList[ultimoPed].data["ruaDest"];
-      ordersInfos.nomeMarket = documentList[ultimoPed].data["nomeMarket"];
-      ordersInfos.numDest = documentList[ultimoPed].data["numDest"];
-      ordersInfos.entregadorClId = documentList[ultimoPed].data["entregadorClId"];
-      User user = await Util.getUsuario(documentList[ultimoPed].data["userClId"]["id"]);
-      ordersInfos.userClId = user;
-      ordersInfos.longitudeMarketDest =
-          documentList[ultimoPed].data["longitudeMarketDest"];
-      ordersInfos.latitudeMarketDest =
-          documentList[ultimoPed].data["latitudeMarketDest"];
-      ordersInfos.numMarketDest = documentList[ultimoPed].data["numMarketDest"];
-      ordersInfos.longitudeDest = documentList[ultimoPed].data["longitudeDest"];
-      ordersInfos.latitudeDest = documentList[ultimoPed].data["latitudeDest"];
-      ordersInfos.dataEntregaPed = documentList[ultimoPed].data["dataEntregaPed"];
-      ordersInfos.idPedido = documentList[ultimoPed].data["idPedido"];
+      OrderPed ord = await Util.pesquisaOrder(documentList[ultimoPed].data["idPedido"]);
+      idDocument = documentList[ultimoPed].documentID;
+
+   ordersInfos = ord;
       setState(() {
         possuiOrder = true;
       });
@@ -346,7 +336,7 @@ class _HomeState extends State<Home> {
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => OrderInfo(ordersInfos),
+                                      builder: (context) => OrderInfo(ordersInfos, idDocument),
                                     ));
                               },
                               child: Card(
@@ -358,7 +348,7 @@ class _HomeState extends State<Home> {
                                       ),
                                       ListTile(
                                         leading: Icon(Icons.shopping_cart),
-                                        title: Text("Super Mercado: ${ordersInfos.nomeMarket}"),
+                                        title: Text("Super Mercado: ${ordersInfos.mercado.nome}"),
                                       ),
                                       ListTile(
                                         leading: Icon(Icons.calendar_today),

@@ -51,6 +51,12 @@ class _MapState extends State<Map> {
         _movimentarCamera(_posicaoCamera);
       }
     });
+    Position pose = position;
+
+
+
+    print(pose);
+
   }
 
   _exibirMarcador(Position local) async {
@@ -100,6 +106,7 @@ class _MapState extends State<Map> {
   _confirmaEndereco() async {
     String enderecoDestino = _controllerDestino.text;
 
+
     if (enderecoDestino.isNotEmpty) {
       List<Placemark> listaEnderecos =
           await Geolocator().placemarkFromAddress(enderecoDestino);
@@ -112,8 +119,12 @@ class _MapState extends State<Map> {
         destino.cep = endereco.postalCode;
         destino.bairro = endereco.subLocality;
         destino.rua = endereco.thoroughfare;
-        destino.numero = endereco.subThoroughfare;
-
+        if (enderecoDestino.contains(",")) {
+          List<String> parte = enderecoDestino.split(",");
+          destino.numero = parte[1];
+        } else {
+          destino.numero = "";
+        }
         destino.latitude = endereco.position.latitude;
         destino.longitude = endereco.position.longitude;
         Navigator.pop(context, destino);

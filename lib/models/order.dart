@@ -1,28 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'destino.dart';
+import 'market.dart';
+import 'shopper.dart';
 import 'user.dart';
 
 class OrderPed {
   User _userClId;
-  String _entregadorClId;
+  Shopper _entregadorClId;
   Timestamp _dataHoraPed = Timestamp.now();
-  Timestamp _dataEntregaPed = Timestamp.now();
+  Timestamp _dataEntregaPed;
   List _itens;
-  String _ruaDest;
-  String _numDest;
-  double _longitudeDest;
-  double _latitudeDest;
-  String _ruaMarketDest;
-  String _numMarketDest;
-  String _nomeMarket;
-  double _longitudeMarketDest;
-  double _latitudeMarketDest;
+  Destino _destino;
+  Market _mercado;
   String _situacao;
-  String _idPedido;
-
-  OrderPed();
-
-
+  double _valorFrete;
+  String _nota;
+  double _valorNota;
   Map<String, dynamic> toMap(){
 
     Map<String, dynamic> dadosUser = {
@@ -34,6 +28,28 @@ class OrderPed {
       "deliveryman": false,
     };
 
+    Map<String, dynamic> dadosDestino = {
+      "rua" : this.destino.rua,
+      "numero" : this.destino.numero,
+      "bairro" : this.destino.bairro,
+      "cep" : this.destino.cep,
+      "cidade": this.destino.cidade,
+      "latitude": this.destino.latitude,
+      "longitude": this.destino.longitude,
+    };
+
+    Map<String, dynamic> dadosMercado = {
+      "rua" : this.mercado.rua,
+      "numero" : this.mercado.numero,
+      "bairro" : this.mercado.bairro,
+      "cep" : this.mercado.cep,
+      "cidade": this.mercado.cidade,
+      "latitude": this.mercado.latitude,
+      "longitude": this.mercado.longitude,
+      "nome": this.mercado.nome,
+    };
+
+
 
     Map<String, dynamic> map = {
       "userClId": dadosUser,
@@ -41,25 +57,23 @@ class OrderPed {
       "dataHoraPed": this.dataHoraPed,
       "dataEntregaPed": this.dataEntregaPed,
       "itens": this.itens,
-      "ruaDest": this.ruaDest,
-      "numDest": this.numDest,
-      "longitudeDest": this.longitudeDest,
-      "latitudeDest": this.latitudeDest,
-      "ruaMarketDest": this.ruaMarketDest,
-      "numMarketDest": this.numMarketDest,
-      "nomeMarket": this.nomeMarket,
-      "longitudeMarketDest": this.longitudeMarketDest,
-      "latitudeMarketDest": this.latitudeMarketDest,
       "situacao": this.situacao,
       "idPedido" : this.idPedido,
+      "destino" : dadosDestino,
+      "mercado" : dadosMercado,
+      "valorFrete" : this.valorFrete,
+      "nota": this.nota,
+      "valorNota": this.valorNota
     };
 
     return map;
 
   }
 
+  String _idPedido;
 
 
+  OrderPed();
 
   String get idPedido => _idPedido;
 
@@ -73,79 +87,22 @@ class OrderPed {
     _situacao = value;
   }
 
+  Market get mercado => _mercado;
 
-  String get nomeMarket => _nomeMarket;
-
-  set nomeMarket(String value) {
-    _nomeMarket = value;
+  set mercado(Market value) {
+    _mercado = value;
   }
 
-  String get numMarketDest => _numMarketDest;
+  Destino get destino => _destino;
 
-  set numMarketDest(String value) {
-    _numMarketDest = value;
-  }
-
-  String get ruaMarketDest => _ruaMarketDest;
-
-  set ruaMarketDest(String value) {
-    _ruaMarketDest = value;
-  }
-
-
-  String get numDest => _numDest;
-
-  set numDest(String value) {
-    _numDest = value;
-  }
-
-  String get ruaDest => _ruaDest;
-
-  set ruaDest(String value) {
-    _ruaDest = value;
+  set destino(Destino value) {
+    _destino = value;
   }
 
   List get itens => _itens;
 
   set itens(List value) {
     _itens = value;
-  }
-
-  String get entregadorClId => _entregadorClId;
-
-  set entregadorClId(String value) {
-    _entregadorClId = value;
-  }
-
-
-  User get userClId => _userClId;
-
-  set userClId(User value) {
-    _userClId = value;
-  }
-
-  double get latitudeMarketDest => _latitudeMarketDest;
-
-  set latitudeMarketDest(double value) {
-    _latitudeMarketDest = value;
-  }
-
-  double get longitudeMarketDest => _longitudeMarketDest;
-
-  set longitudeMarketDest(double value) {
-    _longitudeMarketDest = value;
-  }
-
-  double get latitudeDest => _latitudeDest;
-
-  set latitudeDest(double value) {
-    _latitudeDest = value;
-  }
-
-  double get longitudeDest => _longitudeDest;
-
-  set longitudeDest(double value) {
-    _longitudeDest = value;
   }
 
   Timestamp get dataEntregaPed => _dataEntregaPed;
@@ -158,5 +115,36 @@ class OrderPed {
 
   set dataHoraPed(Timestamp value) {
     _dataHoraPed = value;
+  }
+
+
+  Shopper get entregadorClId => _entregadorClId;
+
+  set entregadorClId(Shopper value) {
+    _entregadorClId = value;
+  }
+
+  User get userClId => _userClId;
+
+  set userClId(User value) {
+    _userClId = value;
+  }
+
+  String get nota => _nota;
+
+  set nota(String value) {
+    _nota = value;
+  }
+
+  double get valorFrete => _valorFrete;
+
+  set valorFrete(double value) {
+    _valorFrete = value;
+  }
+
+  double get valorNota => _valorNota;
+
+  set valorNota(double value) {
+    _valorNota = value;
   }
 }

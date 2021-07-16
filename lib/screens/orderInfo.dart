@@ -2,16 +2,25 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:compra_rapida_2/models/order.dart';
+import 'package:compra_rapida_2/models/shopper.dart';
+import 'package:compra_rapida_2/models/status.dart';
 import 'package:compra_rapida_2/models/user.dart';
+import 'package:compra_rapida_2/screens/chat_screen.dart';
+import 'package:compra_rapida_2/screens/encerraPed.dart';
+import 'package:compra_rapida_2/screens/imageNota.dart';
+import 'package:compra_rapida_2/screens/perfilShopper.dart';
+import 'package:compra_rapida_2/util/util.dart';
 import 'package:flutter/material.dart';
 import 'package:date_format/date_format.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 
 import 'home.dart';
 
 class OrderInfo extends StatefulWidget {
   OrderPed order;
+  String idDocument;
 
-  OrderInfo(this.order);
+  OrderInfo(this.order, this.idDocument);
 
   @override
   _OrderInfoState createState() => _OrderInfoState();
@@ -23,21 +32,13 @@ class _OrderInfoState extends State<OrderInfo> {
   Firestore db = Firestore.instance;
   OrderPed ord;
 
-  Stream<QuerySnapshot> _adicionarListenerRequisicoes(){
 
-    final stream = db.collection("pedidos").document(widget.order.idPedido).snapshots();
 
-    stream.listen((dados){
-      _controller.add(dados) ;
-    });
-
-  }
 
 
   @override
   void initState() {
     super.initState();
-    _adicionarListenerRequisicoes();
   }
 
   @override
@@ -51,7 +52,7 @@ class _OrderInfoState extends State<OrderInfo> {
               List<DocumentSnapshot> documentList;
               documentList = (await Firestore.instance
                       .collection("usuarios")
-                      .where("id", isEqualTo: widget.order.userClId)
+                      .where("id", isEqualTo: widget.order.userClId.idUser)
                       .getDocuments())
                   .documents;
 
@@ -96,8 +97,10 @@ class _OrderInfoState extends State<OrderInfo> {
                       if (false) {
                         return Text("");
                       } else {
+
                         return Container(
                           child: Card(
+
                             child: Column(
                               children: <Widget>[
                                 AppBar(
@@ -108,7 +111,38 @@ class _OrderInfoState extends State<OrderInfo> {
                                     PhysicalModel(
                                       color: Colors.transparent,
                                       child: IconButton(
-                                          onPressed: () {},
+                                          onPressed: () async {
+                                            OrderPed ped = await Util.pesquisaOrder(widget.order.idPedido);
+
+                                            if (ped.situacao == Status.AGUARDANDO) {
+                                              Alert(
+                                                  context: context,
+                                                  title: "Cancelar Pedido?",
+                                                  desc:
+                                                  "Deseja prosseguir para cancelar o pedido?",
+                                                  buttons: [
+                                                    DialogButton(
+                                                        child: Text("Sim"),
+                                                        onPressed: () async {
+                                                          Firestore.instance.collection("pedidos").document(widget.idDocument).delete();
+                                                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Home(widget.order.userClId),));
+                                                        }),
+                                                    DialogButton(
+                                                        child: Text("Não"),
+                                                        onPressed: () {
+                                                          Navigator.pop(context);
+                                                        }),
+                                                  ]).show();
+                                            } else {
+                                              Alert(
+                                                buttons: [],
+                                                  context: context,
+                                                  title: "Pedido em andamento",
+                                                  desc:
+                                                  "Não é possivel cancelar um pedido em andamento!",
+                                                  ).show();
+                                            }
+                                          },
                                           icon: Icon(
                                             Icons.cancel,
                                             color: Colors.red,
@@ -120,7 +154,13 @@ class _OrderInfoState extends State<OrderInfo> {
                                     PhysicalModel(
                                       color: Colors.transparent,
                                       child: IconButton(
-                                          onPressed: () {},
+                                          onPressed: () {
+                                            Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => ChatScreen(widget.order.userClId.idUser, widget.idDocument),
+                                                ));
+                                          },
                                           icon: Icon(
                                             Icons.chat,
                                             size: 40,
@@ -138,12 +178,12 @@ class _OrderInfoState extends State<OrderInfo> {
                                 ListTile(
                                   leading: Icon(Icons.shopping_cart),
                                   title: Text(
-                                      "Super Mercado: ${snapshot.data.documents[0]["nomeMarket"]}"),
+                                      "Super Mercado: ${snapshot.data.documents[0]["mercado"]["nome"]}"),
                                 ),
                                 ListTile(
                                   leading: Icon(Icons.location_on),
                                   title: Text(
-                                      "Endereço: ${snapshot.data.documents[0]["ruaDest"]}, ${snapshot.data.documents[0]["numDest"]}"),
+                                      "Endereço: ${snapshot.data.documents[0]["destino"]["rua"]}, ${snapshot.data.documents[0]["destino"]["numero"]}"),
                                 ),
                                 ListTile(
                                   leading: Icon(Icons.calendar_today),
@@ -157,16 +197,109 @@ class _OrderInfoState extends State<OrderInfo> {
                                       ])}"),
                                 ),
                                 ListTile(
-                                  leading: CircularProgressIndicator(),
+                                  onTap: snapshot.data.documents[0]["valorNota"] != null ? () {
+                                    Navigator.push(context, MaterialPageRoute(builder: (context) => ImageNota(snapshot.data.documents[0]["nota"]),));
+                                  } : null,
+                                  leading: Icon(Icons.attach_money),
+                                  selected: snapshot.data.documents[0]["valorNota"] != null,
+                                  title: Text(
+                                      "Valor:\n \nEntrega: ${widget.order.valorFrete.toStringAsFixed(2)} \nNota: "
+                                          "${snapshot.data.documents[0]["valorNota"] != null ? snapshot.data.documents[0]["valorNota"].toStringAsFixed(2) : ""}"
+                                          ),
+                                ),
+                                ListTile(
+                                  leading: Icon(Icons.adjust),
                                   title: Text(
                                       "Situação: ${snapshot.data.documents[0]["situacao"]}"),
                                 ),
                                 ListTile(
+                                  onTap: snapshot.data.documents[0]["entregadorClId"] != null ? () async {
+                                    Shopper s = await Util.pesquisaShopper(snapshot.data.documents[0]["entregadorClId"]["id"]);
+
+                                    List<DocumentSnapshot> documentList;
+                                    documentList = (await Firestore.instance
+                                        .collection("pedidos")
+                                        .where("entregadorClId.id", isEqualTo: s.idUser)
+                                        .getDocuments())
+                                        .documents;
+
+                                    Navigator.push(context, MaterialPageRoute(builder: (context) => perfilShopper(s, documentList.length),));
+
+                                  } : null,
                                   leading: Icon(Icons.person),
-                                  title: Text("Entregador: ${snapshot.data.documents[0]["entregadorClId"] != null ? snapshot.data.documents[0]["entregadorClId"] : "Procurando"}"),
+                                  selected: snapshot.data.documents[0]["entregadorClId"] != null,
+                                  title: Text("Entregador: ${snapshot.data.documents[0]["entregadorClId"] != null ? snapshot.data.documents[0]["entregadorClId"]["nome"] : "Procurando"}"),
                                 ),
                                 LinearProgressIndicator(
                                   value: 0,
+                                ),
+                                SizedBox(
+                                  height: 30,
+                                ),
+
+                                Visibility(
+                                  visible: snapshot.data.documents[0]["situacao"] == Status.CONFIRMADA,
+                                    child: Container(
+                                        width: 300,
+                                        height: 50,
+                                        child: PhysicalModel(
+                                          color: Colors.transparent,
+                                          shadowColor: Colors.black,
+                                          elevation: 8.0,
+                                          child: RaisedButton(
+                                            child: Text(
+                                              'Confirmar Entrega',
+                                              style: TextStyle(fontSize: 18.0),
+                                            ),
+                                            textColor: Colors.white,
+                                            color: Colors.redAccent,
+                                            onPressed: () {
+                                              Alert(
+                                                  context: context,
+                                                  title: "Confirmar Entrega?",
+                                                  desc:
+                                                  "Confira todos os produtos antes de confirmar!",
+                                                  buttons: [
+                                                    DialogButton(
+                                                        child: Text("Sim"),
+                                                        onPressed: () async {
+                                                          Firestore db = Firestore.instance;
+                                                          db
+                                                              .collection("pedidos")
+                                                              .document(widget.idDocument)
+                                                              .updateData({"situacao": Status.ENTREGUE});
+
+                                                          double vNota = snapshot.data.documents[0]["valorNota"];
+                                                          double vFrete = snapshot.data.documents[0]["valorFrete"];
+                                                          double vPorc = vFrete / 0.3;
+                                                          double totalFrete = vFrete - vPorc;
+
+                                                          db
+                                                              .collection("shoppers")
+                                                              .document(widget.idDocument)
+                                                              .updateData({"balance": (vNota + totalFrete)});
+
+                                                          Navigator.pushReplacement(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                builder: (context) => EncerraPed(snapshot.data.documents[0]["entregadorClId"]["id"], snapshot.data.documents[0]["userClId"]["id"]),
+                                                              ));
+                                                          
+                                                        }),
+                                                    DialogButton(
+                                                        child: Text("Não"),
+                                                        onPressed: () {
+                                                          Navigator.pop(context);
+                                                        }),
+                                                  ]).show();
+                                            },
+                                          ),
+                                        )),
+
+
+                                ),
+                                SizedBox(
+                                  height: 50,
                                 )
                               ],
                             ),
