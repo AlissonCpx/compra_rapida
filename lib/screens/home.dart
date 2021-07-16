@@ -5,9 +5,13 @@ import 'package:compra_rapida_2/models/order.dart';
 import 'package:compra_rapida_2/models/pedido.dart';
 import 'package:compra_rapida_2/models/shopper.dart';
 import 'package:compra_rapida_2/models/user.dart';
+import 'package:compra_rapida_2/screens/historico.dart';
+import 'package:compra_rapida_2/screens/login.dart';
 import 'package:compra_rapida_2/screens/newList.dart';
+import 'package:compra_rapida_2/screens/perfil.dart';
 import 'package:compra_rapida_2/util/util.dart';
 import 'package:date_format/date_format.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
@@ -163,7 +167,11 @@ class _HomeState extends State<Home> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   FlatButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        FirebaseAuth auth = FirebaseAuth.instance;
+                        auth.signOut();
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Login(),));
+                      },
                       child: PhysicalModel(
                         color: Colors.transparent,
                         child: Text(
@@ -181,15 +189,17 @@ class _HomeState extends State<Home> {
             ListTile(
               contentPadding: EdgeInsets.all(10.0),
               leading: Icon(
-                Icons.chat,
+                Icons.person,
                 color: Colors.black,
                 size: 40,
               ),
               title: Text(
-                "Mensagens",
+                "Perfil",
                 style: TextStyle(color: Colors.black),
               ),
-              onTap: () {},
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => Perfil(widget.user),));
+              },
               selected: true,
             ),
             ListTile(
@@ -217,7 +227,9 @@ class _HomeState extends State<Home> {
                 "Minhas Listas",
                 style: TextStyle(color: Colors.black),
               ),
-              onTap: () {},
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => Historico(widget.user.idUser),));
+              },
               selected: true,
             ),
             ListTile(

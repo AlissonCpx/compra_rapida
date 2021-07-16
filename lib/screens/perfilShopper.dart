@@ -51,7 +51,6 @@ class perfilShopper extends StatelessWidget {
                     direction: Axis.horizontal,
                     allowHalfRating: false,
                     ignoreGestures: true,
-
                     itemCount: 5,
                     itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
                     itemBuilder: (context, _) => Icon(

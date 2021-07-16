@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:compra_rapida_2/models/user.dart';
 import 'package:compra_rapida_2/screens/home.dart';
 import 'package:compra_rapida_2/screens/register.dart';
+import 'package:compra_rapida_2/screens/trocarsenha.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -201,7 +202,9 @@ class _LoginState extends State<Login> {
                           width: 255,
                         ),
                         FlatButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => TrocaSenha(),));
+                          },
                           child: Text('Esqueceu a senha?'),
                         ),
                       ],

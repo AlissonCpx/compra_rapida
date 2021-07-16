@@ -8,6 +8,7 @@ import 'package:compra_rapida_2/models/user.dart';
 import 'package:compra_rapida_2/screens/chat_screen.dart';
 import 'package:compra_rapida_2/screens/encerraPed.dart';
 import 'package:compra_rapida_2/screens/imageNota.dart';
+import 'package:compra_rapida_2/screens/orderInfo.dart';
 import 'package:compra_rapida_2/screens/perfilShopper.dart';
 import 'package:compra_rapida_2/util/util.dart';
 import 'package:flutter/material.dart';
@@ -16,17 +17,17 @@ import 'package:rflutter_alert/rflutter_alert.dart';
 
 import 'home.dart';
 
-class OrderInfo extends StatefulWidget {
+class MinhaLista extends StatefulWidget {
   OrderPed order;
   String idDocument;
 
-  OrderInfo(this.order, this.idDocument);
+  MinhaLista(this.order, this.idDocument);
 
   @override
-  _OrderInfoState createState() => _OrderInfoState();
+  _MinhaListaState createState() => _MinhaListaState();
 }
 
-class _OrderInfoState extends State<OrderInfo> {
+class _MinhaListaState extends State<MinhaLista> {
   final _controller = StreamController<DocumentSnapshot>.broadcast();
 
   Firestore db = Firestore.instance;
@@ -45,32 +46,6 @@ class _OrderInfoState extends State<OrderInfo> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-            onPressed: () async {
-              Firestore db = Firestore.instance;
-
-              List<DocumentSnapshot> documentList;
-              documentList = (await Firestore.instance
-                      .collection("usuarios")
-                      .where("id", isEqualTo: widget.order.userClId.idUser)
-                      .getDocuments())
-                  .documents;
-
-              User usuario = User();
-              usuario.urlImagem = documentList[0].data["urlImagem"];
-              usuario.idUser = documentList[0].data["id"];
-              usuario.deliveryman = false;
-              usuario.nome = documentList[0].data["nome"];
-              usuario.email = documentList[0].data["email"];
-              usuario.balance = documentList[0].data["balance"];
-
-              Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => Home(usuario),
-                  ));
-            },
-            icon: Icon(Icons.arrow_back)),
         title: Text("Pedido"),
         centerTitle: true,
       ),
@@ -115,38 +90,58 @@ class _OrderInfoState extends State<OrderInfo> {
                                           onPressed: () async {
                                             OrderPed ped = await Util.pesquisaOrder(widget.order.idPedido);
 
-                                            if (ped.situacao == Status.AGUARDANDO) {
+
                                               Alert(
                                                   context: context,
-                                                  title: "Cancelar Pedido?",
+                                                  title: "Enviar Pedido?",
                                                   desc:
-                                                  "Deseja prosseguir para cancelar o pedido?",
+                                                  "Deseja prosseguir com o mesmo pedido?",
                                                   buttons: [
                                                     DialogButton(
                                                         child: Text("Sim"),
                                                         onPressed: () async {
-                                                          Firestore.instance.collection("pedidos").document(widget.idDocument).delete();
-                                                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Home(widget.order.userClId),));
-                                                        }),
+                                                          OrderPed newPed = widget.order;
+
+                                                            Firestore db = Firestore.instance;
+
+                                                            String id = newPed.idPedido;
+
+                                                            newPed.valorNota = null;
+                                                            newPed.nota = null;
+                                                            newPed.situacao = Status.AGUARDANDO;
+                                                            newPed.entregadorClId = null;
+                                                            newPed.dataHoraPed = Timestamp.now();
+
+
+
+
+
+                                                            await db.collection("pedidos").document().setData(newPed.toMap());
+
+                                                            List<DocumentSnapshot> documentList;
+                                                            documentList = (await db
+                                                                .collection("pedidos")
+                                                                .where("idPedido", isEqualTo: id)
+                                                                .getDocuments())
+                                                                .documents;
+
+                                                            Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                  builder: (context) => OrderInfo(newPed, documentList[0].documentID),
+                                                                ));
+                                                          }
+                                                        ),
                                                     DialogButton(
                                                         child: Text("Não"),
                                                         onPressed: () {
                                                           Navigator.pop(context);
                                                         }),
                                                   ]).show();
-                                            } else {
-                                              Alert(
-                                                buttons: [],
-                                                  context: context,
-                                                  title: "Pedido em andamento",
-                                                  desc:
-                                                  "Não é possivel cancelar um pedido em andamento!",
-                                                  ).show();
-                                            }
+
                                           },
                                           icon: Icon(
-                                            Icons.cancel,
-                                            color: Colors.red,
+                                            Icons.add_to_photos,
                                             size: 40,
                                           )),
                                       elevation: 5,
