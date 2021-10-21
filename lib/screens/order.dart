@@ -133,7 +133,7 @@ class _OrderState extends State<Order> {
         double valor = distanciaKm * 2.2;
         double total = valor;
         if (widget.ped.itens.length > 15) {
-          total = valor * 0.25;
+          total = valor + 5.0;
         }
 
         setState(() {
@@ -260,7 +260,7 @@ class _OrderState extends State<Order> {
                 child: ListCombo<String>(
                   getList: () async {
                     await Future.delayed(const Duration(milliseconds: 500));
-                    return ["Atacadão", "Krolow", "Maxx", "Stok Center"];
+                    return ["Atacadão", "Krolow", "Maxxi", "Stok Center"];
                   },
                   child: Padding(
                     padding: EdgeInsets.all(16),
